@@ -23,12 +23,19 @@ func (e *Error) Unwrap() error {
 }
 
 func ServeError(w http.ResponseWriter, err error) {
+	// TODO: What if err == nil?
 	apihErr, ok := err.(*Error)
 	if !ok {
 		apihErr = &Error{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Internal server error",
 			Inner:      err,
+		}
+	} else if apihErr.Message == "" {
+		if apihErr.Inner != nil {
+			apihErr.Message = apihErr.Inner.Error()
+		} else {
+			apihErr.Message = http.StatusText(apihErr.StatusCode)
 		}
 	}
 	ServeJSON(w, apihErr.StatusCode, apihErr)
